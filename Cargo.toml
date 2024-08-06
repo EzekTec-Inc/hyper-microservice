@@ -1,0 +1,36 @@
+[package]
+name = "hyper-microservice"
+version = "0.1.0"
+edition = "2021"
+authors = ["engr-uba <stephen.ezekwem@ezektec.com>"]
+description = "A microservice implementation using Rust hyper framework"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = "0.2"
+
+http = "1"
+http-body = "1"
+
+bytes = "1.2"
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_cbor = "0.8"
+hyper = "1.0"
+tokio = { version = "1", features = ["full"] }
+http-body-util = "0.1"
+hyper-util = { version = "0.1", features = ["full"] }
+log = "0.4.22"
+pretty_env_logger = "0.5"
+sqlx = { version = "0.6", features = ["runtime-async-std-native-tls", "sqlite"] }
+futures = "0.3"
+chrono = "0.4"
+dotenv = "0.15"
+clap = "2.32"
+toml = "0.5"
+failure = "0.1"
+queryst = "2.0"
+# uuid = { version = "1.8", features = ["serde", "v4"] }
