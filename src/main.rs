@@ -3,9 +3,7 @@ extern crate serde_cbor;
 extern crate failure;
 
 //use failure::{ format_err };
-// use futures::Stream;
 //use tokio::sync::futures;
-//use tracing_subscriber::fmt::format::FmtSpan;
 use bytes::Bytes;
 use std::convert::Infallible;
 use std::net::SocketAddr;
@@ -13,7 +11,6 @@ use std::num::ParseIntError;
 use std::str::FromStr;
 
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
-// use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::{Method, Request, Response, StatusCode};
 use hyper_util::rt::TokioIo;
@@ -27,16 +24,15 @@ use std::fs::File;
 use std::io::{self, Read};
 use serde::{Deserialize, Serialize};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqliteQueryResult, Sqlite, SqlitePool, Row };
-// use uuid::Uuid;
 
 const INDEX: &str = r#"
 <!doctype html>
 <html>
     <head>
-        <title>EzekTec Inc Microservices</title>
+        <title>EzekTec Inc. Microservices</title>
     </head>
     <body>
-        <h3>EzekTec Inc Microservice...implemented by Engr. Stephen Chinwuba Ezekwem</h3>
+        <h3>EzekTec Inc Microservice...implemented by Engr. Stephen E. ( <span><p> stephen.ezekwem@gmail.com </p></span> )</h3>
     </body>
 </html>
 "#;
@@ -96,7 +92,7 @@ async fn create_schema(db_url: &str) -> Result<SqliteQueryResult, sqlx::Error> {
     result
 
 }
-
+/// API microservice health check. (e.g. 0.0.0.0:3000/health)
 async fn health_check(
     _: Request<hyper::body::Incoming>,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
@@ -105,6 +101,8 @@ async fn health_check(
     ))))
 }
 
+/// API microservice payload json rust struct. This mirrors the exact datastructure for the project
+/// table and the json payload from the client system.
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct Project {
     product_id: u32,
@@ -117,6 +115,7 @@ struct Project {
     settings_id: u32
 }
 
+/// API microservice delete payload json rust struct.
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct DeleteProduct {
     product_id: u32,
@@ -137,7 +136,7 @@ impl FromStr for DeleteProduct {
 
     }
 }
-
+/// API microservice -- get a single project from the database.
 async fn get_a_product(
     id: u32,
     db_conn: sqlx::SqlitePool
@@ -167,6 +166,7 @@ async fn get_a_product(
     Ok(serde_json::to_string(&result).unwrap())
 }
 
+/// API microservice -- get all the projects from the database.
 async fn get_products(
     db_conn: sqlx::SqlitePool
 ) -> Result<Vec<Project>, sqlx::error::Error> { 
@@ -195,6 +195,7 @@ async fn get_products(
     
 }
 
+/// API microservice -- remove a project record from the database.
 async fn delete_product(
     id: u32,
     db_conn: sqlx::SqlitePool,
@@ -210,6 +211,25 @@ async fn delete_product(
     Ok(format!("Record successfully deleted from database table!: {:?}", result))
 }
 
+/// API microservice -- service request enum dictating the microservice operation to perform.
+/// TODO: 2024-08-06: Refactor this enum to remove the repettion of 'product_id' on all enum
+/// variant.
+#[derive(Debug, Deserialize)]
+#[serde(tag = "distribution", content = "parameters", rename_all="lowercase")]
+enum ServiceRequest {
+    ListProducts,
+    GetProduct {
+        product_id: u32,
+    },
+    DeleteProduct {
+        product_id: u32,
+    },
+    CreateProduct {
+        product: Project,
+    },
+}
+
+/// API microservice -- add a project record to the database.
 async fn create_product(
     req: Project,
     db_instance: sqlx::SqlitePool
@@ -231,21 +251,7 @@ async fn create_product(
 
     Ok(format!("Record successfully added to database table!: {:?}", result))
 }
-
-#[derive(Debug, Deserialize)]
-#[serde(tag = "distribution", content = "parameters", rename_all="lowercase")]
-enum ServiceRequest {
-    ListProducts,
-    GetProduct {
-        product_id: u32,
-    },
-    DeleteProduct {
-        product_id: u32,
-    },
-    CreateProduct {
-        product: Project,
-    },
-}
+/// API microservice -- service response struct for ease of passing content back to the client..
 #[derive(Deserialize, Serialize)]
 struct ServiceResponse {
     status: u8,
@@ -260,12 +266,15 @@ impl ServiceResponse {
     }
 }
 
+/// NOTE: (2024-08-06) - return the API microservice data response as varying JSON RPC formats.
+/// TODO: 2024-08-06: Refactor this function into a 'helper' library.
 fn serialize(format: &str, resp: &ServiceResponse) -> Result<Vec<u8>, Box< dyn std::error::Error >> {
     match format {
         "json" => { 
 
             Ok( serde_json::to_vec(&resp)? ) 
         },
+        // implement additional data serialization formats that meets your specific use-cases.
         //"cbor" => Ok( serde_cbor::to_vec(&resp)? ),
         _ => {
             Err( Box::new( std::io::Error::new( std::io::ErrorKind::InvalidInput, "Invalid format" ) ) )
@@ -273,6 +282,8 @@ fn serialize(format: &str, resp: &ServiceResponse) -> Result<Vec<u8>, Box< dyn s
     }
 }
 
+/// NOTE: (2024-08-06) - return the API microservice data as a HTTP response.
+/// TODO: 2024-08-06: Refactor this function into a 'helper' library.
 fn package_response
 ( 
     resp: Option<Vec<u8>>, 
@@ -289,7 +300,9 @@ fn package_response
             .unwrap()
     )
 }
-  
+/// NOTE: (2024-08-06) - [PROPOSED] the replacement main API microservice handler that routes/serves the client service request
+/// to the right microservices function
+/// TODO: 2024-08-06: Refactor this function into a 'helper' library.
 async fn _response_with_code
 (
     request: ServiceRequest, 
@@ -350,6 +363,9 @@ async fn _response_with_code
     }
 }
 
+/// NOTE: (2024-08-06) - [CURRENT] the current main API microservice handler that routes/serves the client service request
+/// to the right microservices function. 
+/// TODO: 2024-08-06: Replace this with_ '_response_with_code' here in this file.
 async fn service_handlers(
     req: Request<hyper::body::Incoming>,
     db_instance: sqlx::SqlitePool
@@ -360,11 +376,15 @@ async fn service_handlers(
         },
         (&Method::GET, "/health") => Ok(Response::new(full(HEALTH_CHECK))),
         (&Method::GET, path) if path.starts_with("/products/") => {
+            /// NOTE: this is an alternate approach to using the 'queryst' crate to read request
+            /// parameters and unpack the result into the format/struct of your choosing.
              //let format = {
              //   let uri = req.uri().query().unwrap_or("");
              //   let query = queryst::parse(uri).unwrap_or(serde_json::Value::Null);
              //   query["format"].as_str().unwrap_or("json").to_string()
              //};
+            /// NOTE: using the 'hyper::request::Request' to extract the 'id' path/parameter from
+            /// the request URI. This relies only on the hyper crate to work with URI's.
             let id = req
                 .uri()
                 .path()
@@ -392,6 +412,7 @@ async fn service_handlers(
             }
         },
         (&Method::GET, "/products") => {
+            /// NOTE: (commented out code) - just another example of the implementation of this API service using the '_response_with_code' handler. The main benefit here is the reduced size of the code, which doesn't mean the code here cannot be refactored to make it smaller.
             /*
             let result = _response_with_code(ServiceRequest::ListProducts, db_instance)
                 .await.unwrap_or_else(|_| Response::new( full( "Error fetching products" ) ) );
@@ -413,7 +434,7 @@ async fn service_handlers(
                 .body(full(result))
                 .unwrap();
 
-            Ok(response) //Response::new(full(result)))
+            Ok(response) 
         },
         (&Method::POST, "/products") => {
             let whole_body =  req.collect().await?.to_bytes();
@@ -470,17 +491,21 @@ async fn service_handlers(
                     .unwrap(); // if this unwrap fails, the system should just panic as we con't
 
                 Ok(response)
-                 
         },
     }
 }
 
+/// NOTE: (2024-08-06) -- [HELPERs] -- these are helper functions that are used in the main API
+/// microservice handler.
+/// TODO: 2024-08-06: Refactor these into a 'helper' library.
+// [[--
 fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, Infallible> {
     Full::new(chunk.into()).boxed()
 }
 fn _empty() -> BoxBody<Bytes, Infallible> {
     Empty::<Bytes>::new().boxed()
 }
+// --]]
 
 #[derive(Debug)]
 pub struct Db {
@@ -510,11 +535,12 @@ struct Config {
     address: String,
 }
 
+/// NOTE: (2024-08-06) -- [MAIN] -- this is the main API microservice handler.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
      pretty_env_logger::init();
 
-    // Read configurations from the config file -- microserves.toml -- in the current working
+    /// NOTE: (2024-08-06) - Read mciroservice configurations from the config file -- microserves.toml -- in the current working
     // directory of this server.
     let config = File::open("microserves.toml")
             .and_then(|mut file| {
