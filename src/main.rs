@@ -93,7 +93,8 @@ async fn create_schema(db_url: &str) -> Result<SqliteQueryResult, sqlx::Error> {
 
 }
 /// API microservice health check. (e.g. 0.0.0.0:3000/health)
-async fn health_check(
+async fn health_check
+(
     _: Request<hyper::body::Incoming>,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     Ok(Response::new(Full::new(Bytes::from(
@@ -137,7 +138,8 @@ impl FromStr for DeleteProduct {
     }
 }
 /// API microservice -- get a single project from the database.
-async fn get_a_product(
+async fn get_a_product
+(
     id: u32,
     db_conn: sqlx::SqlitePool
 ) -> Result<String, sqlx::error::Error> {
@@ -167,7 +169,8 @@ async fn get_a_product(
 }
 
 /// API microservice -- get all the projects from the database.
-async fn get_products(
+async fn get_products
+(
     db_conn: sqlx::SqlitePool
 ) -> Result<Vec<Project>, sqlx::error::Error> { 
     let qry ="
@@ -196,7 +199,8 @@ async fn get_products(
 }
 
 /// API microservice -- remove a project record from the database.
-async fn delete_product(
+async fn delete_product
+(
     id: u32,
     db_conn: sqlx::SqlitePool,
 ) -> Result<String, sqlx::error::Error> {
@@ -230,7 +234,8 @@ enum ServiceRequest {
 }
 
 /// API microservice -- add a project record to the database.
-async fn create_product(
+async fn create_product
+(
     req: Project,
     db_instance: sqlx::SqlitePool
 ) -> Result<String, sqlx::error::Error> {
@@ -268,7 +273,11 @@ impl ServiceResponse {
 
 /// NOTE: (2024-08-06) - return the API microservice data response as varying JSON RPC formats.
 /// TODO: 2024-08-06: Refactor this function into a 'helper' library.
-fn serialize(format: &str, resp: &ServiceResponse) -> Result<Vec<u8>, Box< dyn std::error::Error >> {
+fn serialize
+(
+    format: &str, 
+    resp: &ServiceResponse
+) -> Result<Vec<u8>, Box< dyn std::error::Error >> {
     match format {
         "json" => { 
 
@@ -277,7 +286,11 @@ fn serialize(format: &str, resp: &ServiceResponse) -> Result<Vec<u8>, Box< dyn s
         // implement additional data serialization formats that meets your specific use-cases.
         //"cbor" => Ok( serde_cbor::to_vec(&resp)? ),
         _ => {
-            Err( Box::new( std::io::Error::new( std::io::ErrorKind::InvalidInput, "Invalid format" ) ) )
+            Err( 
+                Box::new( 
+                    std::io::Error::new( std::io::ErrorKind::InvalidInput, "Invalid format" ) 
+                ) 
+            )
         },
     }
 }
@@ -310,8 +323,12 @@ async fn _response_with_code
 ) -> Result< Response<BoxBody<Bytes, Infallible>>, hyper::Error > {
     match request {
         ServiceRequest::ListProducts => {
-            let projects = get_products(pool_instance.clone()).await.map_err(|_| "Error fetching products");
+            let projects = get_products(pool_instance.clone())
+                .await
+                .map_err(|_| "Error fetching products");
+
             let mut result = String::new();
+
             for project in projects.iter() {
                 let projects_in_json = serde_json::to_string(project)
                     .unwrap_or("Error: database response convertion issue".to_string());
@@ -345,7 +362,12 @@ async fn _response_with_code
             let projects = get_a_product(product_id, pool_instance.clone())
                 .await
                 .map_err(|_| "Error fetching products");
-            let service_resp = ServiceResponse::init(200, projects.unwrap_or("No projects found".to_string()));
+            let service_resp = ServiceResponse::init
+                (
+                    200, 
+                    projects.unwrap_or("No projects found".to_string()
+                )
+            );
             let service_resp_serialized = serialize("json", &service_resp).unwrap();
             let packaged_response = package_response(
                 Some(serde_json::to_vec(&service_resp_serialized).unwrap()), 
@@ -366,7 +388,8 @@ async fn _response_with_code
 /// NOTE: (2024-08-06) - [CURRENT] the current main API microservice handler that routes/serves the client service request
 /// to the right microservices function. 
 /// TODO: 2024-08-06: Replace this with_ '_response_with_code' here in this file.
-async fn service_handlers(
+async fn service_handlers
+(
     req: Request<hyper::body::Incoming>,
     db_instance: sqlx::SqlitePool
 ) -> Result<Response<BoxBody<Bytes, Infallible>>, hyper::Error> {
@@ -622,14 +645,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 let result = sqlx::query(&qry).execute(db.get_pool()).await;
                 let result = format!("{:?}", result.map_err(
                                             |err| 
-                                            format!("Error: database create schema issues: {:?}", err.to_string())
+                                            format!(
+                                                "Error: database create schema issues: {:?}", 
+                                                err.to_string()
+                                            )
                                          )
                 );
                 
                 if result.contains('0')  {
                     // If it does, add a record to prime the db table
                     let qry ="INSERT INTO settings (description) VALUES()";
-                    let result = sqlx::query(&qry).bind("testing").execute(db.get_pool()).await;
+                    let result = sqlx::query(&qry)
+                        .bind("testing")
+                        .execute(db.get_pool())
+                    .await;
                     tracing::info!("`settings` table instantiated: {:?} ", &result);
                     println!("{:?}", result);
                 }
