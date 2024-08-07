@@ -62,7 +62,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 5. Run the application:
     ```sh
-    cargo run
+    cargo RUST_LOG=hyper_microservce=trace,warn,debug cargo watch -x run
     ```
 
 ## Usage
