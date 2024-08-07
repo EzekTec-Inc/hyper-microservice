@@ -73,4 +73,12 @@ Once the application is running, you can access the different microservices via 
 
 ```sh
 curl -X GET http://0.0.0.0:3000/health
+```
+
+```sh
+curl -X GET http://0.0.0.0:3000/products
+```
+```sh
+curl -X GET http://0.0.0.0:3000/products/1
+```
 
