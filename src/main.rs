@@ -53,7 +53,7 @@ const HEALTH_CHECK: &str = r#"
         <title>EzekTec Inc Microservices - Health Check - </title>
     </head>
     <body>
-        <h3> If you have reached this link, this machine is still alive! </h3>
+        <p> If you have reached this link, this machine is still alive! </p>
     </body>
 </html>
 "#;
