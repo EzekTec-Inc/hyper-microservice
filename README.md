@@ -98,3 +98,10 @@ curl -X GET http://0.0.0.0:3000/products -H "Content-Type: application/json"
 }'
 ```
 
+### NOTE:
+The following files have been included in this repository to help you get started and to test the microservices. It is expected that you'll delete these files or modify them to suite your usage.
+
+```sh 
+.env
+users.db
+```
