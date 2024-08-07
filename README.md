@@ -78,7 +78,23 @@ curl -X GET http://0.0.0.0:3000/health
 ```sh
 curl -X GET http://0.0.0.0:3000/products
 ```
+
 ```sh
 curl -X GET http://0.0.0.0:3000/products/1
+```
+
+```sh
+curl -X GET http://0.0.0.0:3000/products -H "Content-Type: application/json" 
+-d 
+'{
+    "product_id": 3, 
+    "product_name": "Your Product Name", 
+    "created_on": "2024-08-01", 
+    "updated_on": "2024-08-06", 
+    "img_directory": "path/to/img", 
+    "out_directory": "path/to/project", 
+    "status": "In-Progress", 
+    "settings_id": "1" 
+}'
 ```
 
