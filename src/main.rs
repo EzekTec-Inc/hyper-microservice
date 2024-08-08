@@ -559,7 +559,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     // NOTE: (2024-08-06) - Read mciroservice configurations from the config file -- microserves.toml -- in the current working
     // directory of this server.
-    let config = File::open("microserves.toml")
+    let config = File::open("microservices.toml")
             .and_then(|mut file| {
                 let mut buffer = String::new();
                 file.read_to_string(&mut buffer)?;
